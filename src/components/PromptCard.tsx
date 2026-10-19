@@ -1,6 +1,7 @@
 import React from 'react';
 import { PromptItem } from '../types/prompt';
 import { Heart, ArrowRight, ShieldCheck } from 'lucide-react';
+import { LivePreviewRenderer } from './LivePreviewRenderer';
 
 interface PromptCardProps {
   prompt: PromptItem;
@@ -58,37 +59,9 @@ export const PromptCard: React.FC<PromptCardProps> = ({
           </button>
         </div>
 
-        {/* Live Simulation Card inside Preview */}
-        <div 
-          className="relative z-10 p-3 rounded-xl border backdrop-blur-md shadow-sm"
-          style={{
-            backgroundColor: `${preview.theme.cardBg}CC`,
-            borderColor: preview.theme.border
-          }}
-        >
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-slate-200 truncate">
-              {preview.headline}
-            </span>
-            <span 
-              className="w-2 h-2 rounded-full animate-pulse"
-              style={{ backgroundColor: preview.theme.accent }}
-            />
-          </div>
-          <p className="text-[11px] text-slate-400 line-clamp-1">
-            {preview.subline}
-          </p>
-
-          {preview.metrics && preview.metrics.length > 0 && (
-            <div className="mt-2.5 pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px]">
-              {preview.metrics.slice(0, 2).map((m, idx) => (
-                <div key={idx} className="flex items-center gap-1">
-                  <span className="text-slate-400">{m.label}:</span>
-                  <span className="font-mono font-medium text-slate-200">{m.value}</span>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Live Simulation Card inside Preview with Style-specific rendering */}
+        <div className="relative z-10 w-full h-full flex flex-col justify-end">
+          <LivePreviewRenderer prompt={prompt} size="compact" />
         </div>
       </div>
 

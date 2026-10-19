@@ -4,6 +4,7 @@ import {
   X, Copy, Check, ExternalLink, Heart, Sparkles, BookOpen, 
   Code2, AlertTriangle, ShieldCheck, Download, Languages, Sliders
 } from 'lucide-react';
+import { LivePreviewRenderer } from './LivePreviewRenderer';
 
 interface PromptDetailModalProps {
   prompt: PromptItem | null;
@@ -182,54 +183,15 @@ ${prompt.promptOriginal}
         {/* Modal Body with Scroll */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           
-          {/* Grand Aperçu Visuel Réel */}
+          {/* Grand Aperçu Visuel Réel & Vivant */}
           <div 
-            className="w-full rounded-2xl border p-6 overflow-hidden relative"
+            className="w-full rounded-2xl border overflow-hidden relative min-h-[220px]"
             style={{
               backgroundColor: prompt.preview.theme.bg,
               borderColor: prompt.preview.theme.border
             }}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block" />
-                <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
-                <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
-                <span className="text-xs font-mono text-slate-400 ml-2">Aperçu Visuel Structuré</span>
-              </div>
-              <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700">
-                {prompt.preview.badges.join(' • ')}
-              </span>
-            </div>
-
-            <div 
-              className="p-6 rounded-xl border backdrop-blur-md"
-              style={{
-                backgroundColor: `${prompt.preview.theme.cardBg}EE`,
-                borderColor: prompt.preview.theme.border
-              }}
-            >
-              <h3 
-                className="text-xl sm:text-2xl font-bold mb-2"
-                style={{ color: prompt.preview.theme.text }}
-              >
-                {prompt.preview.headline}
-              </h3>
-              <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
-                {prompt.preview.subline}
-              </p>
-
-              {prompt.preview.metrics && prompt.preview.metrics.length > 0 && (
-                <div className="mt-6 pt-4 border-t border-slate-700/60 grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {prompt.preview.metrics.map((m, idx) => (
-                    <div key={idx} className="bg-slate-900/60 p-3 rounded-lg border border-slate-800">
-                      <div className="text-xs text-slate-400">{m.label}</div>
-                      <div className="text-lg font-bold font-mono text-white mt-0.5">{m.value}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <LivePreviewRenderer prompt={prompt} size="full" />
           </div>
 
           {/* Description & Sources */}

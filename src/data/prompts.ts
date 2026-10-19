@@ -1,6 +1,7 @@
-import type { PromptItem } from '../types/prompt.ts';
+import type { PromptItem } from '../types/prompt';
+import { ADDITIONAL_PROMPTS_DATA } from './additional_prompts';
 
-export const PROMPTS_DATA: PromptItem[] = [
+const BASE_PROMPTS: PromptItem[] = [
   {
     id: "sd-bento-dark-graphite",
     slug: "bento-dashboard-dark-graphite",
@@ -1024,4 +1025,9 @@ Livre un code React TSX complet, modulaire et parfaitement responsive.`,
       ]
     }
   }
+];
+
+export const PROMPTS_DATA: PromptItem[] = [
+  ...BASE_PROMPTS,
+  ...ADDITIONAL_PROMPTS_DATA
 ];

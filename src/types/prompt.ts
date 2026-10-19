@@ -27,7 +27,12 @@ export type DesignStyle =
   | 'Y2K Cyber Chrome'
   | 'E-Ink & Monospace'
   | 'Editorial & Typographique'
-  | 'Kinetic & 3D WebGL';
+  | 'Kinetic & 3D WebGL'
+  | 'Aurora Mesh & Glow'
+  | 'Retro Terminal'
+  | 'Memphis & Pop Art'
+  | 'Broadsheet & Newsprint'
+  | 'Risograph & Print';
 
 export interface GuideContext {
   targetProject: string; // Type de projet adapté
