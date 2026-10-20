@@ -1,5 +1,6 @@
 import type { PromptItem } from '../types/prompt';
 import { ADDITIONAL_PROMPTS_DATA } from './additional_prompts';
+import { CONSOLIDATED_PROMPTS } from './consolidated_prompts';
 
 const BASE_PROMPTS: PromptItem[] = [
   {
@@ -1027,7 +1028,18 @@ Livre un code React TSX complet, modulaire et parfaitement responsive.`,
   }
 ];
 
-export const PROMPTS_DATA: PromptItem[] = [
+// Combine curated base prompts, additional presets, and the 315 consolidated items without duplicating slugs
+const allRawPrompts = [
   ...BASE_PROMPTS,
-  ...ADDITIONAL_PROMPTS_DATA
+  ...ADDITIONAL_PROMPTS_DATA,
+  ...CONSOLIDATED_PROMPTS
 ];
+
+const slugMap = new Map<string, PromptItem>();
+for (const p of allRawPrompts) {
+  if (!slugMap.has(p.slug)) {
+    slugMap.set(p.slug, p);
+  }
+}
+
+export const PROMPTS_DATA: PromptItem[] = Array.from(slugMap.values());

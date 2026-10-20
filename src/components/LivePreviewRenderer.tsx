@@ -10,6 +10,33 @@ export const LivePreviewRenderer: React.FC<LivePreviewRendererProps> = ({ prompt
   const { style, preview } = prompt;
   const isCompact = size === 'compact';
 
+  // PRIORITY: If a real screenshot exists, render it with high-fidelity visual presentation!
+  if (preview.screenshotUrl) {
+    return (
+      <div className="w-full h-full relative overflow-hidden bg-slate-950 flex items-center justify-center group/preview">
+        <img 
+          src={preview.screenshotUrl} 
+          alt={preview.headline || prompt.titleFr} 
+          className="w-full h-full object-cover object-top transition-transform duration-500 group-hover/preview:scale-105"
+          loading="lazy"
+          onError={(e) => {
+            // Fallback gracefully if image fails to load
+            (e.target as HTMLElement).style.display = 'none';
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+        <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[11px] pointer-events-none">
+          <span className="font-semibold text-white/90 drop-shadow truncate">
+            {preview.headline}
+          </span>
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-black/60 text-white border border-white/20 backdrop-blur-md">
+            {style}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   // 1. NEUBRUTALISM
   if (style === 'Neubrutalism') {
     return (

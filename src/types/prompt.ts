@@ -75,7 +75,7 @@ export interface PromptItem {
     subline: string;
     metrics?: { label: string; value: string }[];
     interactiveType?: string;
-    screenshotUrl?: string;
+    screenshotUrl?: string | null;
   };
 
   // Prompts complets

@@ -118,6 +118,21 @@ export function App() {
     });
   }, [searchQuery, selectedCategory, selectedStyle, selectedSource, sortBy, viewFilter, favorites, recentlyViewed]);
 
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const ITEMS_PER_PAGE = 24;
+
+  // Reset page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedStyle, selectedSource, sortBy, viewFilter]);
+
+  // Paginated Prompts
+  const totalPages = Math.ceil(filteredPrompts.length / ITEMS_PER_PAGE) || 1;
+  const paginatedPrompts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredPrompts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredPrompts, currentPage]);
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0B0F19] text-slate-100 selection:bg-indigo-500 selection:text-white">
       
@@ -241,7 +256,7 @@ export function App() {
           </div>
 
           {/* Filter Pills */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800/80 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-800/80 text-xs">
             <div>
               <label className="block text-slate-400 font-medium mb-1">Catégorie :</label>
               <select
@@ -280,6 +295,29 @@ export function App() {
                 ))}
               </select>
             </div>
+
+            <div>
+              <label className="block text-slate-400 font-medium mb-1">Page active :</label>
+              <div className="flex items-center gap-2 pt-0.5">
+                <button
+                  disabled={currentPage <= 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 rounded text-slate-200 font-semibold"
+                >
+                  &larr; Préc.
+                </button>
+                <span className="font-mono text-slate-400 text-center min-w-[50px]">
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 rounded text-slate-200 font-semibold"
+                >
+                  Suiv. &rarr;
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -304,16 +342,53 @@ export function App() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPrompts.map(prompt => (
-                <PromptCard
-                  key={prompt.id}
-                  prompt={prompt}
-                  isFavorite={favorites.includes(prompt.id)}
-                  onToggleFavorite={toggleFavorite}
-                  onSelect={handleOpenPrompt}
-                />
-              ))}
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedPrompts.map(prompt => (
+                  <PromptCard
+                    key={prompt.id}
+                    prompt={prompt}
+                    isFavorite={favorites.includes(prompt.id)}
+                    onToggleFavorite={toggleFavorite}
+                    onSelect={handleOpenPrompt}
+                  />
+                ))}
+              </div>
+
+              {/* Bottom Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="pt-6 border-t border-slate-800 flex items-center justify-between">
+                  <div className="text-xs text-slate-400">
+                    Affichage des prompts <span className="font-semibold text-white">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> à <span className="font-semibold text-white">{Math.min(currentPage * ITEMS_PER_PAGE, filteredPrompts.length)}</span> sur <span className="font-semibold text-white">{filteredPrompts.length}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={currentPage <= 1}
+                      onClick={() => {
+                        setCurrentPage(p => Math.max(1, p - 1));
+                        window.scrollTo({ top: 400, behavior: 'smooth' });
+                      }}
+                      className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 rounded-lg text-xs font-semibold text-white transition-colors"
+                    >
+                      &larr; Page Précédente
+                    </button>
+                    <span className="font-mono text-xs px-3 py-1.5 bg-slate-900/60 border border-slate-800 rounded-lg text-indigo-300">
+                      {currentPage} / {totalPages}
+                    </span>
+                    <button
+                      disabled={currentPage >= totalPages}
+                      onClick={() => {
+                        setCurrentPage(p => Math.min(totalPages, p + 1));
+                        window.scrollTo({ top: 400, behavior: 'smooth' });
+                      }}
+                      className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 rounded-lg text-xs font-semibold text-white transition-colors"
+                    >
+                      Page Suivante &rarr;
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </section>
