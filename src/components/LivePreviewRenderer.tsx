@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PromptItem } from '../types/prompt';
+import { Play, Image as ImageIcon, Film } from 'lucide-react';
 
 interface LivePreviewRendererProps {
   prompt: PromptItem;
@@ -9,20 +10,104 @@ interface LivePreviewRendererProps {
 export const LivePreviewRenderer: React.FC<LivePreviewRendererProps> = ({ prompt, size = 'compact' }) => {
   const { style, preview } = prompt;
   const isCompact = size === 'compact';
+  const [videoError, setVideoError] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [viewMode, setViewMode] = useState<'video' | 'image'>(preview.videoUrl ? 'video' : 'image');
 
-  // PRIORITY: If a real screenshot exists, render it with high-fidelity visual presentation!
-  if (preview.screenshotUrl) {
+  // PRIORITY 1: VIDEO PREVIEW (High-demand feature requested by user)
+  if (preview.videoUrl && !videoError && (isCompact || viewMode === 'video')) {
     return (
-      <div className="w-full h-full relative overflow-hidden bg-slate-950 flex items-center justify-center group/preview">
+      <div className="w-full h-full relative overflow-hidden bg-slate-950 flex flex-col items-center justify-center group/preview">
+        {/* Toggle bar in full modal mode if both video and image are available */}
+        {!isCompact && preview.screenshotUrl && !imageError && (
+          <div className="absolute top-3 right-3 z-30 flex items-center bg-black/70 backdrop-blur-md border border-white/20 rounded-lg p-1 text-xs gap-1">
+            <button
+              onClick={() => setViewMode('video')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
+                viewMode === 'video' ? 'bg-indigo-600 text-white shadow' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <Film className="w-3.5 h-3.5" />
+              <span>Vidéo démo</span>
+            </button>
+            <button
+              onClick={() => setViewMode('image')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
+                viewMode === 'image' ? 'bg-indigo-600 text-white shadow' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+              <span>Capture HD</span>
+            </button>
+          </div>
+        )}
+
+        <video
+          src={preview.videoUrl}
+          poster={preview.screenshotUrl || undefined}
+          autoPlay
+          muted
+          loop
+          playsInline
+          controls={!isCompact}
+          onError={() => setVideoError(true)}
+          className={`w-full ${isCompact ? 'h-full object-cover object-top' : 'max-h-[500px] object-contain'} transition-transform duration-500`}
+        />
+
+        {isCompact && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
+            <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-rose-500/80 text-white backdrop-blur-md shadow-sm border border-rose-400/40 pointer-events-none">
+              <Play className="w-2.5 h-2.5 fill-white" />
+              <span>DÉMO</span>
+            </div>
+            <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[11px] pointer-events-none">
+              <span className="font-semibold text-white/95 drop-shadow truncate">
+                {preview.headline}
+              </span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-black/70 text-indigo-300 border border-indigo-500/30 backdrop-blur-md">
+                {style}
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // PRIORITY 2: SCREENSHOT / IMAGE PREVIEW
+  if (preview.screenshotUrl && !imageError) {
+    return (
+      <div className="w-full h-full relative overflow-hidden bg-slate-950 flex flex-col items-center justify-center group/preview">
+        {!isCompact && preview.videoUrl && !videoError && (
+          <div className="absolute top-3 right-3 z-30 flex items-center bg-black/70 backdrop-blur-md border border-white/20 rounded-lg p-1 text-xs gap-1">
+            <button
+              onClick={() => setViewMode('video')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
+                viewMode === 'video' ? 'bg-indigo-600 text-white shadow' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <Film className="w-3.5 h-3.5" />
+              <span>Vidéo démo</span>
+            </button>
+            <button
+              onClick={() => setViewMode('image')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
+                viewMode === 'image' ? 'bg-indigo-600 text-white shadow' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+              <span>Capture HD</span>
+            </button>
+          </div>
+        )}
+
         <img 
           src={preview.screenshotUrl} 
           alt={preview.headline || prompt.titleFr} 
-          className="w-full h-full object-cover object-top transition-transform duration-500 group-hover/preview:scale-105"
+          className={`w-full ${isCompact ? 'h-full object-cover object-top' : 'max-h-[500px] object-contain'} transition-transform duration-500 group-hover/preview:scale-105`}
           loading="lazy"
-          onError={(e) => {
-            // Fallback gracefully if image fails to load
-            (e.target as HTMLElement).style.display = 'none';
-          }}
+          onError={() => setImageError(true)}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
         <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[11px] pointer-events-none">

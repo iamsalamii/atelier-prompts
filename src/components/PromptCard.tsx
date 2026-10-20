@@ -25,7 +25,7 @@ export const PromptCard: React.FC<PromptCardProps> = ({
     >
       {/* Visual Preview Header */}
       <div 
-        className="relative h-44 w-full p-5 flex flex-col justify-between overflow-hidden border-b border-slate-800/60"
+        className="relative h-48 w-full overflow-hidden border-b border-slate-800/60 bg-slate-950"
         style={{
           background: preview.type === 'gradient'
             ? `radial-gradient(circle at top right, ${preview.theme.accent}33, ${preview.theme.bg} 80%)`
@@ -35,33 +35,41 @@ export const PromptCard: React.FC<PromptCardProps> = ({
         {/* Subtle grid background pattern */}
         <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
 
-        {/* Top Badges & Favorite Action */}
-        <div className="relative z-10 flex items-center justify-between gap-2">
-          <div className="flex flex-wrap gap-1.5 items-center">
-            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+        {/* Full background live preview (Video or Image or Style Sandbox) */}
+        <div className="absolute inset-0 z-0">
+          <LivePreviewRenderer prompt={prompt} size="compact" />
+        </div>
+
+        {/* Top Floating Badges & Favorite Action */}
+        <div className="relative z-10 p-3 flex items-center justify-between gap-2 pointer-events-none">
+          <div className="flex flex-wrap gap-1.5 items-center pointer-events-auto">
+            <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-indigo-950/80 text-indigo-300 border border-indigo-500/40 backdrop-blur-md shadow-sm">
               {prompt.category}
             </span>
-            <span className="px-2 py-0.5 text-[11px] font-medium rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/60">
+            <span className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-slate-900/80 text-slate-300 border border-slate-700/80 backdrop-blur-md">
               {prompt.style}
             </span>
+            {prompt.preview.videoUrl && (
+              <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-rose-500/90 text-white shadow-sm flex items-center gap-1 backdrop-blur-md">
+                🎥 Vidéo
+              </span>
+            )}
           </div>
 
           <button
-            onClick={(e) => onToggleFavorite(prompt.id, e)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite(prompt.id, e);
+            }}
             aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-            className={`p-2 rounded-full backdrop-blur-md transition-colors ${
+            className={`p-2 rounded-full backdrop-blur-md pointer-events-auto transition-all ${
               isFavorite
-                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-700/60'
+                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40 shadow-sm'
+                : 'bg-slate-900/70 text-slate-300 hover:text-white hover:bg-slate-900 border border-slate-700/70'
             }`}
           >
-            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-rose-400' : ''}`} />
+            <Heart className={`w-3.5 h-3.5 ${isFavorite ? 'fill-rose-400' : ''}`} />
           </button>
-        </div>
-
-        {/* Live Simulation Card inside Preview with Style-specific rendering */}
-        <div className="relative z-10 w-full h-full flex flex-col justify-end">
-          <LivePreviewRenderer prompt={prompt} size="compact" />
         </div>
       </div>
 

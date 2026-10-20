@@ -62,7 +62,7 @@ export interface PromptItem {
 
   // Aperçu visuel légal / capture ou miniature vectorielle
   preview: {
-    type: 'gradient' | 'wireframe' | 'screenshot' | 'interactive';
+    type: 'gradient' | 'wireframe' | 'screenshot' | 'interactive' | 'video';
     theme: {
       bg: string;
       accent: string;
@@ -76,6 +76,7 @@ export interface PromptItem {
     metrics?: { label: string; value: string }[];
     interactiveType?: string;
     screenshotUrl?: string | null;
+    videoUrl?: string | null;
   };
 
   // Prompts complets

@@ -6,7 +6,7 @@ import { PromptDetailModal } from './components/PromptDetailModal';
 import { UsageGuideSection } from './components/UsageGuideSection';
 import { 
   Search, SlidersHorizontal, Sparkles, Heart, Clock, 
-  ArrowUpDown, CheckCircle2, ShieldCheck
+  ArrowUpDown, CheckCircle2, ShieldCheck, Film
 } from 'lucide-react';
 
 export function App() {
@@ -14,6 +14,7 @@ export function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('Toutes');
   const [selectedStyle, setSelectedStyle] = useState<string>('Tous');
   const [selectedSource, setSelectedSource] = useState<string>('Toutes');
+  const [onlyWithVideo, setOnlyWithVideo] = useState(false);
   const [sortBy, setSortBy] = useState<'relevance' | 'alpha' | 'popularity'>('popularity');
   const [selectedPrompt, setSelectedPrompt] = useState<PromptItem | null>(null);
 
@@ -73,6 +74,7 @@ export function App() {
   const categories: string[] = ['Toutes', ...Array.from(new Set(PROMPTS_DATA.map(p => p.category)))];
   const styles: string[] = ['Tous', ...Array.from(new Set(PROMPTS_DATA.map(p => p.style)))];
   const sources: string[] = ['Toutes', 'Superdesign Prompts', 'MotionSites', 'MotionSites Prompt Collection'];
+  const totalWithVideo = useMemo(() => PROMPTS_DATA.filter(p => !!p.preview.videoUrl).length, []);
 
   // Filtered & Sorted Prompts
   const filteredPrompts = useMemo(() => {
@@ -80,6 +82,9 @@ export function App() {
       // View tab filter
       if (viewFilter === 'favorites' && !favorites.includes(item.id)) return false;
       if (viewFilter === 'recent' && !recentlyViewed.includes(item.id)) return false;
+
+      // Video demo filter
+      if (onlyWithVideo && !item.preview.videoUrl) return false;
 
       // Category filter
       if (selectedCategory !== 'Toutes' && item.category !== selectedCategory) return false;
@@ -231,9 +236,26 @@ export function App() {
         {/* Filter Controls & Bar */}
         <section className="bg-[#101524] border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-4 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-              <SlidersHorizontal className="w-4 h-4 text-indigo-400" />
-              <span>Filtres & Affichage</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <SlidersHorizontal className="w-4 h-4 text-indigo-400" />
+                <span>Filtres</span>
+              </div>
+
+              <button
+                onClick={() => {
+                  setOnlyWithVideo(!onlyWithVideo);
+                  setCurrentPage(1);
+                }}
+                className={`px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+                  onlyWithVideo
+                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/50 shadow-sm'
+                    : 'bg-slate-900 text-slate-300 hover:text-white border-slate-700 hover:border-slate-600'
+                }`}
+              >
+                <Film className="w-3.5 h-3.5 text-rose-400" />
+                <span>Démo Vidéo ({totalWithVideo})</span>
+              </button>
             </div>
 
             <div className="flex items-center gap-3 text-xs text-slate-400">
