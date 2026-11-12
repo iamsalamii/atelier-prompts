@@ -6,7 +6,7 @@ import { PromptDetailModal } from './components/PromptDetailModal';
 import { UsageGuideSection } from './components/UsageGuideSection';
 import { 
   Search, SlidersHorizontal, Sparkles, Heart, Clock, 
-  ArrowUpDown, CheckCircle2, ShieldCheck, Film
+  ArrowUpDown, CheckCircle2, ShieldCheck, Film, LayoutGrid, Columns2, PlayCircle
 } from 'lucide-react';
 
 export function App() {
@@ -15,6 +15,8 @@ export function App() {
   const [selectedStyle, setSelectedStyle] = useState<string>('Tous');
   const [selectedSource, setSelectedSource] = useState<string>('Toutes');
   const [onlyWithVideo, setOnlyWithVideo] = useState(false);
+  const [gridCols, setGridCols] = useState<2 | 3>(3);
+  const [autoPlayOnHover, setAutoPlayOnHover] = useState(false);
   const [sortBy, setSortBy] = useState<'relevance' | 'alpha' | 'popularity'>('popularity');
   const [selectedPrompt, setSelectedPrompt] = useState<PromptItem | null>(null);
 
@@ -121,7 +123,7 @@ export function App() {
       }
       return 0;
     });
-  }, [searchQuery, selectedCategory, selectedStyle, selectedSource, sortBy, viewFilter, favorites, recentlyViewed]);
+  }, [searchQuery, selectedCategory, selectedStyle, selectedSource, onlyWithVideo, sortBy, viewFilter, favorites, recentlyViewed]);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const ITEMS_PER_PAGE = 24;
@@ -129,7 +131,7 @@ export function App() {
   // Reset page when search or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, selectedStyle, selectedSource, sortBy, viewFilter]);
+  }, [searchQuery, selectedCategory, selectedStyle, selectedSource, onlyWithVideo, sortBy, viewFilter]);
 
   // Paginated Prompts
   const totalPages = Math.ceil(filteredPrompts.length / ITEMS_PER_PAGE) || 1;
@@ -234,41 +236,86 @@ export function App() {
         </section>
 
         {/* Filter Controls & Bar */}
-        <section className="bg-[#101524] border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-4 shadow-sm">
+        <section className="bg-[#101524] border border-white/[0.08] rounded-2xl p-4 sm:p-6 space-y-4 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">
                 <SlidersHorizontal className="w-4 h-4 text-indigo-400" />
                 <span>Filtres</span>
               </div>
 
               <button
+                type="button"
                 onClick={() => {
                   setOnlyWithVideo(!onlyWithVideo);
                   setCurrentPage(1);
                 }}
-                className={`px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+                className={`cursor-pointer px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
                   onlyWithVideo
-                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/50 shadow-sm'
+                    ? 'bg-pink-500/20 text-pink-300 border-pink-500/50 shadow-sm'
                     : 'bg-slate-900 text-slate-300 hover:text-white border-slate-700 hover:border-slate-600'
                 }`}
               >
-                <Film className="w-3.5 h-3.5 text-rose-400" />
+                <Film className="w-3.5 h-3.5 text-pink-400" />
                 <span>Démo Vidéo ({totalWithVideo})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAutoPlayOnHover(!autoPlayOnHover)}
+                title="Basculer entre lecture automatique des vidéos visibles et lecture au survol"
+                className={`cursor-pointer px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+                  !autoPlayOnHover
+                    ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/40'
+                    : 'bg-slate-900 text-slate-300 hover:text-white border-slate-700'
+                }`}
+              >
+                <PlayCircle className="w-3.5 h-3.5 text-indigo-400" />
+                <span>{autoPlayOnHover ? 'Lecture au survol' : 'Lecture auto'}</span>
               </button>
             </div>
 
-            <div className="flex items-center gap-3 text-xs text-slate-400">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
               <span className="font-semibold text-white">{filteredPrompts.length}</span> prompt{filteredPrompts.length > 1 ? 's' : ''} disponible{filteredPrompts.length > 1 ? 's' : ''}
-              
-              <div className="h-4 w-[1px] bg-slate-700" />
+
+              <div className="h-4 w-[1px] bg-slate-700 hidden sm:block" />
+
+              {/* Grid Columns Switcher for Larger Previews */}
+              <div className="inline-flex items-center bg-slate-900 border border-slate-700 rounded-lg p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setGridCols(2)}
+                  title="2 colonnes — Grands aperçus"
+                  aria-label="Afficher en 2 colonnes"
+                  className={`cursor-pointer flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                    gridCols === 2 ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Columns2 className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Grand</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGridCols(3)}
+                  title="3 colonnes — Vue standard"
+                  aria-label="Afficher en 3 colonnes"
+                  className={`cursor-pointer flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                    gridCols === 3 ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Standard</span>
+                </button>
+              </div>
+
+              <div className="h-4 w-[1px] bg-slate-700 hidden sm:block" />
 
               <div className="flex items-center gap-1.5">
                 <ArrowUpDown className="w-3.5 h-3.5" />
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
+                  className="cursor-pointer bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
                 >
                   <option value="popularity">Popularité & Recommandation</option>
                   <option value="alpha">Ordre Alphabétique (A-Z)</option>
@@ -277,21 +324,26 @@ export function App() {
             </div>
           </div>
 
-          {/* Filter Pills */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-800/80 text-xs">
-            <div>
-              <label className="block text-slate-400 font-medium mb-1">Catégorie :</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+          {/* Quick Category Pills */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/[0.06]">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`cursor-pointer px-3 py-1 rounded-full text-xs font-medium transition-all border ${
+                  selectedCategory === cat
+                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                    : 'bg-slate-900/70 text-slate-300 hover:text-white border-white/[0.08] hover:border-white/20'
+                }`}
               >
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
+                {cat}
+              </button>
+            ))}
+          </div>
 
+          {/* Filter Dropdowns */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-white/[0.06] text-xs">
             <div>
               <label className="block text-slate-400 font-medium mb-1">Style de Design :</label>
               <select
@@ -322,9 +374,10 @@ export function App() {
               <label className="block text-slate-400 font-medium mb-1">Page active :</label>
               <div className="flex items-center gap-2 pt-0.5">
                 <button
+                  type="button"
                   disabled={currentPage <= 1}
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 rounded text-slate-200 font-semibold"
+                  className="cursor-pointer flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 rounded text-slate-200 font-semibold"
                 >
                   &larr; Préc.
                 </button>
@@ -332,9 +385,10 @@ export function App() {
                   {currentPage} / {totalPages}
                 </span>
                 <button
+                  type="button"
                   disabled={currentPage >= totalPages}
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 rounded text-slate-200 font-semibold"
+                  className="cursor-pointer flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 rounded text-slate-200 font-semibold"
                 >
                   Suiv. &rarr;
                 </button>
@@ -351,21 +405,27 @@ export function App() {
                 Aucun prompt ne correspond à vos filtres actuels.
               </p>
               <button
+                type="button"
                 onClick={() => {
                   setSearchQuery('');
                   setSelectedCategory('Toutes');
                   setSelectedStyle('Tous');
                   setSelectedSource('Toutes');
+                  setOnlyWithVideo(false);
                   setViewFilter('all');
                 }}
-                className="px-4 py-2 text-xs font-semibold text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 rounded-lg border border-indigo-500/20"
+                className="cursor-pointer px-4 py-2 text-xs font-semibold text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 rounded-lg border border-indigo-500/20"
               >
                 Réinitialiser les filtres
               </button>
             </div>
           ) : (
             <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div
+                className={`grid grid-cols-1 md:grid-cols-2 ${
+                  gridCols === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'
+                } gap-6`}
+              >
                 {paginatedPrompts.map(prompt => (
                   <PromptCard
                     key={prompt.id}
@@ -373,6 +433,7 @@ export function App() {
                     isFavorite={favorites.includes(prompt.id)}
                     onToggleFavorite={toggleFavorite}
                     onSelect={handleOpenPrompt}
+                    autoPlayOnHover={autoPlayOnHover}
                   />
                 ))}
               </div>

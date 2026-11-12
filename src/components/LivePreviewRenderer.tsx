@@ -1,29 +1,89 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { PromptItem } from '../types/prompt';
-import { Play, Image as ImageIcon, Film } from 'lucide-react';
+import { Play, Pause, Image as ImageIcon, Film } from 'lucide-react';
 
 interface LivePreviewRendererProps {
   prompt: PromptItem;
   size?: 'compact' | 'full';
+  autoPlayOnHover?: boolean;
+  isHovered?: boolean;
+  forceImageMode?: boolean;
 }
 
-export const LivePreviewRenderer: React.FC<LivePreviewRendererProps> = ({ prompt, size = 'compact' }) => {
+export const LivePreviewRenderer: React.FC<LivePreviewRendererProps> = ({
+  prompt,
+  size = 'compact',
+  autoPlayOnHover = false,
+  isHovered = false,
+  forceImageMode = false,
+}) => {
   const { style, preview } = prompt;
   const isCompact = size === 'compact';
   const [videoError, setVideoError] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [viewMode, setViewMode] = useState<'video' | 'image'>(preview.videoUrl ? 'video' : 'image');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // PRIORITY 1: VIDEO PREVIEW (High-demand feature requested by user)
-  if (preview.videoUrl && !videoError && (isCompact || viewMode === 'video')) {
+  // Sync viewMode when prompt changes in modal
+  useEffect(() => {
+    setVideoError(false);
+    setImageError(false);
+    setViewMode(preview.videoUrl ? 'video' : 'image');
+  }, [prompt.id, preview.videoUrl]);
+
+  // Smart playback in compact cards: play on hover OR when visible in viewport
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !isCompact) return;
+
+    if (autoPlayOnHover) {
+      if (isHovered) {
+        video.play().then(() => setIsPlaying(true)).catch(() => {});
+      } else {
+        video.pause();
+        setIsPlaying(false);
+      }
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            video.play().then(() => setIsPlaying(true)).catch(() => {});
+          } else {
+            video.pause();
+            setIsPlaying(false);
+          }
+        });
+      },
+      { threshold: 0.25 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isCompact, autoPlayOnHover, isHovered, prompt.id]);
+
+  // PRIORITY 1: VIDEO PREVIEW
+  const showVideo = preview.videoUrl && !videoError && !forceImageMode && (isCompact || viewMode === 'video');
+  if (showVideo) {
     return (
-      <div className="w-full h-full relative overflow-hidden bg-slate-950 flex flex-col items-center justify-center group/preview">
+      <div
+        ref={containerRef}
+        className="w-full h-full relative overflow-hidden bg-slate-950 flex flex-col items-center justify-center group/preview"
+      >
         {/* Toggle bar in full modal mode if both video and image are available */}
         {!isCompact && preview.screenshotUrl && !imageError && (
-          <div className="absolute top-3 right-3 z-30 flex items-center bg-black/70 backdrop-blur-md border border-white/20 rounded-lg p-1 text-xs gap-1">
+          <div className="absolute top-3 right-3 z-30 flex items-center bg-slate-950/85 backdrop-blur-md border border-white/15 rounded-lg p-1 text-xs gap-1 shadow-lg">
             <button
+              type="button"
               onClick={() => setViewMode('video')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
+              className={`cursor-pointer flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
                 viewMode === 'video' ? 'bg-indigo-600 text-white shadow' : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -31,8 +91,9 @@ export const LivePreviewRenderer: React.FC<LivePreviewRendererProps> = ({ prompt
               <span>Vidéo démo</span>
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('image')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
+              className={`cursor-pointer flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
                 viewMode === 'image' ? 'bg-indigo-600 text-white shadow' : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -43,33 +104,28 @@ export const LivePreviewRenderer: React.FC<LivePreviewRendererProps> = ({ prompt
         )}
 
         <video
-          src={preview.videoUrl}
+          ref={videoRef}
+          src={preview.videoUrl!}
           poster={preview.screenshotUrl || undefined}
-          autoPlay
+          autoPlay={!isCompact}
           muted
           loop
           playsInline
+          preload="metadata"
           controls={!isCompact}
           onError={() => setVideoError(true)}
-          className={`w-full ${isCompact ? 'h-full object-cover object-top' : 'max-h-[500px] object-contain'} transition-transform duration-500`}
+          className={`w-full h-full ${isCompact ? 'object-cover object-top' : 'max-h-[540px] object-contain'} transition-transform duration-500`}
         />
 
         {isCompact && (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
-            <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-rose-500/80 text-white backdrop-blur-md shadow-sm border border-rose-400/40 pointer-events-none">
-              <Play className="w-2.5 h-2.5 fill-white" />
-              <span>DÉMO</span>
-            </div>
-            <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[11px] pointer-events-none">
-              <span className="font-semibold text-white/95 drop-shadow truncate">
-                {preview.headline}
-              </span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-black/70 text-indigo-300 border border-indigo-500/30 backdrop-blur-md">
-                {style}
-              </span>
-            </div>
-          </>
+          <div className="absolute bottom-2.5 left-2.5 z-10 flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-semibold tracking-wide bg-slate-950/80 text-white backdrop-blur-md border border-white/15 pointer-events-none shadow-sm">
+            {isPlaying ? (
+              <Pause className="w-2.5 h-2.5 text-pink-400 fill-pink-400" />
+            ) : (
+              <Play className="w-2.5 h-2.5 text-pink-400 fill-pink-400" />
+            )}
+            <span>{isPlaying ? 'LECTURE' : 'VIDÉO'}</span>
+          </div>
         )}
       </div>
     );
@@ -80,10 +136,11 @@ export const LivePreviewRenderer: React.FC<LivePreviewRendererProps> = ({ prompt
     return (
       <div className="w-full h-full relative overflow-hidden bg-slate-950 flex flex-col items-center justify-center group/preview">
         {!isCompact && preview.videoUrl && !videoError && (
-          <div className="absolute top-3 right-3 z-30 flex items-center bg-black/70 backdrop-blur-md border border-white/20 rounded-lg p-1 text-xs gap-1">
+          <div className="absolute top-3 right-3 z-30 flex items-center bg-slate-950/85 backdrop-blur-md border border-white/15 rounded-lg p-1 text-xs gap-1 shadow-lg">
             <button
+              type="button"
               onClick={() => setViewMode('video')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
+              className={`cursor-pointer flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
                 viewMode === 'video' ? 'bg-indigo-600 text-white shadow' : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -91,8 +148,9 @@ export const LivePreviewRenderer: React.FC<LivePreviewRendererProps> = ({ prompt
               <span>Vidéo démo</span>
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('image')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
+              className={`cursor-pointer flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
                 viewMode === 'image' ? 'bg-indigo-600 text-white shadow' : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -102,22 +160,13 @@ export const LivePreviewRenderer: React.FC<LivePreviewRendererProps> = ({ prompt
           </div>
         )}
 
-        <img 
-          src={preview.screenshotUrl} 
-          alt={preview.headline || prompt.titleFr} 
-          className={`w-full ${isCompact ? 'h-full object-cover object-top' : 'max-h-[500px] object-contain'} transition-transform duration-500 group-hover/preview:scale-105`}
+        <img
+          src={preview.screenshotUrl}
+          alt={preview.headline || prompt.titleFr}
+          className={`w-full h-full ${isCompact ? 'object-cover object-top group-hover/card:scale-[1.03]' : 'max-h-[540px] object-contain'} transition-transform duration-500`}
           loading="lazy"
           onError={() => setImageError(true)}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-        <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[11px] pointer-events-none">
-          <span className="font-semibold text-white/90 drop-shadow truncate">
-            {preview.headline}
-          </span>
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-black/60 text-white border border-white/20 backdrop-blur-md">
-            {style}
-          </span>
-        </div>
       </div>
     );
   }
